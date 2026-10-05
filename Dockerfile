@@ -15,6 +15,9 @@ RUN pip install -r requirements.txt
 
 COPY . .
 
+# Collect admin CSS/JS at build time. The key is only used for this command.
+RUN SECRET_KEY=build-only python manage.py collectstatic --noinput
+
 # Run as a normal user, not root.
 RUN useradd --create-home appuser && chown -R appuser /app
 USER appuser
