@@ -3,6 +3,7 @@ from rest_framework import viewsets
 
 from apps.core.mixins import OwnedQuerysetMixin
 from apps.core.openapi import NOT_FOUND, UNAUTHORIZED, VALIDATION_ERROR
+from apps.ledger.filters import ExpenseFilter
 from apps.ledger.models import Category, Expense
 from apps.ledger.serializers import CategorySerializer, ExpenseSerializer
 
@@ -39,7 +40,16 @@ class CategoryViewSet(OwnedQuerysetMixin, viewsets.ModelViewSet):
 
 
 @extend_schema_view(
-    list=extend_schema(summary="List your expenses", responses={401: UNAUTHORIZED}),
+    list=extend_schema(
+        summary="List your expenses",
+        description=(
+            "Filter with date_after, date_before, category, uncategorized, "
+            "min_amount, max_amount and currency. Search the description with "
+            "search=. Sort with ordering=date, -date, amount or -amount. "
+            "Paginate with page= and page_size= (max 100)."
+        ),
+        responses={400: VALIDATION_ERROR, 401: UNAUTHORIZED},
+    ),
     create=extend_schema(
         summary="Create an expense",
         responses={201: ExpenseSerializer, 400: VALIDATION_ERROR, 401: UNAUTHORIZED},
@@ -61,3 +71,7 @@ class CategoryViewSet(OwnedQuerysetMixin, viewsets.ModelViewSet):
 class ExpenseViewSet(OwnedQuerysetMixin, viewsets.ModelViewSet):
     queryset = Expense.objects.all()
     serializer_class = ExpenseSerializer
+    filterset_class = ExpenseFilter
+    search_fields = ["description"]
+    ordering_fields = ["date", "amount", "created_at"]
+    ordering = ["-date", "-id"]
