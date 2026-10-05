@@ -1,14 +1,18 @@
 from django.contrib import admin
 from django.urls import include, path
+from django.views.generic import RedirectView
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
 from apps.core.views import HealthView
 
 api_v1 = [
     path("health/", HealthView.as_view(), name="health"),
+    path("auth/", include("apps.accounts.urls")),
 ]
 
 urlpatterns = [
+    # Visiting the bare host in a browser lands on the interactive API docs.
+    path("", RedirectView.as_view(pattern_name="swagger-ui"), name="root"),
     path("admin/", admin.site.urls),
     path("api/v1/", include(api_v1)),
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),

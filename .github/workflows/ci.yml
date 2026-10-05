@@ -52,6 +52,8 @@ jobs:
       - run: pip install -r requirements-dev.txt
       - name: Check for missing migrations
         run: python manage.py makemigrations --check --dry-run --settings=config.test_settings
+      - name: Validate OpenAPI schema (warnings fail the build)
+        run: python manage.py spectacular --validate --fail-on-warn --settings=config.test_settings --file /tmp/schema.yml
       - name: Run tests (fails if coverage is under 90%)
         run: pytest
       - uses: actions/upload-artifact@v4
