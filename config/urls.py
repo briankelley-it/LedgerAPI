@@ -9,6 +9,7 @@ api_v1 = [
     path("health/", HealthView.as_view(), name="health"),
     path("auth/", include("apps.accounts.urls")),
     path("", include("apps.ledger.urls")),
+    path("reports/", include("apps.reports.urls")),
 ]
 
 urlpatterns = [
