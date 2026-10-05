@@ -1,0 +1,50 @@
+[project]
+name = "ledgerapi"
+version = "1.0.0"
+description = "Expense tracker REST API built with Django REST Framework"
+requires-python = ">=3.12"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = ["**/migrations/*"]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # import sorting
+    "B",   # bugbear: likely bugs
+    "UP",  # pyupgrade: modern syntax
+    "DJ",  # Django specific checks
+    "SIM", # simplifications
+    "RUF", # ruff's own rules
+]
+# RUF012 wants ClassVar on mutable class attributes, which is noise for
+# Django/DRF classes like Meta.fields and permission_classes.
+ignore = ["RUF012"]
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.test_settings"
+python_files = ["test_*.py"]
+addopts = "--strict-markers --cov --cov-report=term-missing"
+
+[tool.coverage.run]
+source = ["apps", "config"]
+branch = true
+# Paths relative to the repo so CI tools can read the coverage file.
+relative_files = true
+omit = [
+    "*/migrations/*",
+    "config/wsgi.py",
+    "config/asgi.py",
+]
+
+[tool.coverage.report]
+fail_under = 90
+show_missing = true
+skip_covered = true
