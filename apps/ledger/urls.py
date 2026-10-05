@@ -1,0 +1,10 @@
+from rest_framework.routers import DefaultRouter
+
+from apps.ledger.views import CategoryViewSet
+
+router = DefaultRouter(trailing_slash=True)
+# The API root view is not needed: Swagger UI already lists every endpoint.
+router.include_root_view = False
+router.register("categories", CategoryViewSet, basename="category")
+
+urlpatterns = router.urls
