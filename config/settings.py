@@ -137,7 +137,8 @@ SPECTACULAR_SETTINGS = {
     "TITLE": "LedgerAPI",
     "DESCRIPTION": (
         "A small expense tracker REST API. Register, get a JWT, then manage "
-        "your own categories and expenses and see spending summaries."
+        "your own categories, expenses and monthly budgets and see spending "
+        "summaries. Click Authorize and paste an access token to try it out."
     ),
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,

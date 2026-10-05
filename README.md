@@ -1,19 +1,60 @@
-# LedgerAPI
+<h1 align="center">LedgerAPI</h1>
 
-[![CI](https://github.com/briankelley-it/LedgerAPI/actions/workflows/ci.yml/badge.svg)](https://github.com/briankelley-it/LedgerAPI/actions/workflows/ci.yml)
-[![Coverage](https://raw.githubusercontent.com/briankelley-it/LedgerAPI/python-coverage-comment-action-data/badge.svg)](https://github.com/briankelley-it/LedgerAPI/tree/python-coverage-comment-action-data)
-![Python](https://img.shields.io/badge/python-3.12-blue)
-![Django](https://img.shields.io/badge/django-5.2-green)
+<p align="center">
+  <strong>An expense tracker REST API built with Django REST Framework.</strong><br>
+  JWT auth, per-user data isolation, decimal-safe money, budgets and spending reports.
+</p>
 
-An expense tracker REST API. Users register, log in with a JWT, and manage
-their own spending categories, expenses and monthly budgets. A summary endpoint
-reports total spending, totals by category and totals by month, and every
-budget shows how much has been spent against it.
+<p align="center">
+  <a href="https://github.com/briankelley-it/LedgerAPI/actions/workflows/ci.yml"><img src="https://github.com/briankelley-it/LedgerAPI/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/briankelley-it/LedgerAPI/tree/python-coverage-comment-action-data"><img src="https://raw.githubusercontent.com/briankelley-it/LedgerAPI/python-coverage-comment-action-data/badge.svg" alt="Coverage"></a>
+  <img src="https://img.shields.io/badge/python-3.12-3776AB?logo=python&logoColor=white" alt="Python 3.12">
+  <img src="https://img.shields.io/badge/django-5.2_LTS-092E20?logo=django&logoColor=white" alt="Django 5.2">
+  <img src="https://img.shields.io/badge/postgres-16-4169E1?logo=postgresql&logoColor=white" alt="PostgreSQL 16">
+  <img src="https://img.shields.io/badge/docker-ready-2496ED?logo=docker&logoColor=white" alt="Docker">
+  <img src="https://img.shields.io/badge/code_style-ruff-D7FF64" alt="ruff">
+</p>
+
+<p align="center">
+  <img src="docs/images/swagger-overview.png" alt="LedgerAPI Swagger UI showing the auth and categories endpoints" width="900">
+</p>
+
+Users register, log in with a JWT, and manage their own spending categories,
+expenses and monthly budgets. A summary endpoint reports total spending,
+totals by category and totals by month, and every budget shows how much has
+been spent against it.
 
 The goal of this project is to show a small API built carefully: consistent
 errors, strict per-user data isolation, money handled as decimals, every
 endpoint documented in OpenAPI, and a test suite that runs in CI against
 PostgreSQL with a coverage gate.
+
+## Highlights
+
+- **Secure by default**: every query is scoped to the logged-in user, and
+  other users' records return 404, never 403
+- **Money done right**: `Decimal` end to end, amounts returned as strings,
+  positive amounts enforced by both validation and database constraints
+- **One error format** for every failure, from validation errors to unknown URLs
+- **Fully documented**: every endpoint has OpenAPI examples, including its
+  error responses. CI fails if the schema has warnings
+- **Well tested**: 165 tests and 98% coverage, run against PostgreSQL in CI
+  with a 90% minimum
+- **Efficient queries**: budget spending is calculated in SQL, so listing
+  budgets is 2 queries however many there are
+- **Production-shaped**: 12-factor settings, Docker multi-stage build,
+  gunicorn, health check, non-root container user
+
+## Screenshots
+
+Interactive docs are served at `/api/docs/`. Each endpoint shows its request
+and response schema, examples and error responses. Click **Authorize**, paste
+an access token, and use **Try it out** to call the live API.
+
+<p align="center">
+  <img src="docs/images/swagger-endpoint-detail.png" alt="GET /api/v1/auth/me/ in Swagger UI with the 200 response and the documented 401 error example" width="900">
+</p>
+<p align="center"><em>Every endpoint documents its error responses in the shared error format.</em></p>
 
 ## Tech stack
 
@@ -226,6 +267,7 @@ apps/
   reports/         Summary endpoint and services.py with the aggregation logic
 tests/             pytest suite, one folder per app, plus factories
 docker/            Container entrypoint (runs migrations)
+docs/images/       Screenshots used in this README
 ```
 
 ## Design decisions
