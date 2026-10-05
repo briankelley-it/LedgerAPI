@@ -1,5 +1,7 @@
+from decimal import Decimal
+
 from django.conf import settings
-from django.core.validators import RegexValidator
+from django.core.validators import MinValueValidator, RegexValidator
 from django.db import models
 from django.db.models.functions import Lower
 
@@ -34,3 +36,39 @@ class Category(TimestampedModel):
 
     def __str__(self):
         return self.name
+
+
+class Expense(TimestampedModel):
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="expenses"
+    )
+    # Deleting a category keeps its expenses; they just become uncategorized.
+    category = models.ForeignKey(
+        Category,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="expenses",
+    )
+    # Decimal, never float: 0.1 + 0.2 must equal 0.3 when adding up money.
+    amount = models.DecimalField(
+        max_digits=12, decimal_places=2, validators=[MinValueValidator(Decimal("0.01"))]
+    )
+    currency = models.CharField(max_length=3, default="USD")
+    description = models.CharField(max_length=255, blank=True)
+    date = models.DateField()
+
+    class Meta:
+        ordering = ["-date", "-id"]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(amount__gt=0), name="expense_amount_positive"
+            ),
+        ]
+        indexes = [
+            # Most queries are "my expenses in a date range".
+            models.Index(fields=["owner", "date"], name="expense_owner_date_idx"),
+        ]
+
+    def __str__(self):
+        return f"{self.date} {self.amount} {self.currency} {self.description}".strip()

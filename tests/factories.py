@@ -1,7 +1,10 @@
+import datetime
+from decimal import Decimal
+
 import factory
 from django.contrib.auth import get_user_model
 
-from apps.ledger.models import Category
+from apps.ledger.models import Category, Expense
 
 DEFAULT_PASSWORD = "correct-horse-battery"
 
@@ -24,3 +27,16 @@ class CategoryFactory(factory.django.DjangoModelFactory):
     owner = factory.SubFactory(UserFactory)
     name = factory.Sequence(lambda n: f"Category {n}")
     color = "#336699"
+
+
+class ExpenseFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Expense
+
+    owner = factory.SubFactory(UserFactory)
+    # The category, when present, belongs to the same owner as the expense.
+    category = factory.SubFactory(CategoryFactory, owner=factory.SelfAttribute("..owner"))
+    amount = Decimal("10.00")
+    currency = "USD"
+    description = factory.Sequence(lambda n: f"Expense {n}")
+    date = datetime.date(2026, 1, 15)

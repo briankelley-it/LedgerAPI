@@ -3,8 +3,8 @@ from rest_framework import viewsets
 
 from apps.core.mixins import OwnedQuerysetMixin
 from apps.core.openapi import NOT_FOUND, UNAUTHORIZED, VALIDATION_ERROR
-from apps.ledger.models import Category
-from apps.ledger.serializers import CategorySerializer
+from apps.ledger.models import Category, Expense
+from apps.ledger.serializers import CategorySerializer, ExpenseSerializer
 
 
 @extend_schema_view(
@@ -36,3 +36,28 @@ class CategoryViewSet(OwnedQuerysetMixin, viewsets.ModelViewSet):
     serializer_class = CategorySerializer
     search_fields = ["name"]
     ordering_fields = ["name", "created_at"]
+
+
+@extend_schema_view(
+    list=extend_schema(summary="List your expenses", responses={401: UNAUTHORIZED}),
+    create=extend_schema(
+        summary="Create an expense",
+        responses={201: ExpenseSerializer, 400: VALIDATION_ERROR, 401: UNAUTHORIZED},
+    ),
+    retrieve=extend_schema(
+        summary="Get an expense", responses={200: ExpenseSerializer, 404: NOT_FOUND}
+    ),
+    update=extend_schema(
+        summary="Replace an expense",
+        responses={200: ExpenseSerializer, 400: VALIDATION_ERROR, 404: NOT_FOUND},
+    ),
+    partial_update=extend_schema(
+        summary="Update some fields of an expense",
+        responses={200: ExpenseSerializer, 400: VALIDATION_ERROR, 404: NOT_FOUND},
+    ),
+    destroy=extend_schema(summary="Delete an expense", responses={204: None, 404: NOT_FOUND}),
+)
+@extend_schema(tags=["expenses"])
+class ExpenseViewSet(OwnedQuerysetMixin, viewsets.ModelViewSet):
+    queryset = Expense.objects.all()
+    serializer_class = ExpenseSerializer
