@@ -3,9 +3,10 @@ from rest_framework import viewsets
 
 from apps.core.mixins import OwnedQuerysetMixin
 from apps.core.openapi import NOT_FOUND, UNAUTHORIZED, VALIDATION_ERROR
-from apps.ledger.filters import ExpenseFilter
-from apps.ledger.models import Category, Expense
-from apps.ledger.serializers import CategorySerializer, ExpenseSerializer
+from apps.ledger.filters import BudgetFilter, ExpenseFilter
+from apps.ledger.models import Budget, Category, Expense
+from apps.ledger.serializers import BudgetSerializer, CategorySerializer, ExpenseSerializer
+from apps.ledger.services import with_spent
 
 
 @extend_schema_view(
@@ -75,3 +76,42 @@ class ExpenseViewSet(OwnedQuerysetMixin, viewsets.ModelViewSet):
     search_fields = ["description"]
     ordering_fields = ["date", "amount", "created_at"]
     ordering = ["-date", "-id"]
+
+
+@extend_schema_view(
+    list=extend_schema(
+        summary="List your budgets",
+        description=(
+            "Each budget includes how much has been spent in its category, month "
+            "and currency. Filter with month=YYYY-MM, category and over_budget. "
+            "Sort with ordering=month, limit or spent (prefix - for descending)."
+        ),
+        responses={400: VALIDATION_ERROR, 401: UNAUTHORIZED},
+    ),
+    create=extend_schema(
+        summary="Create a monthly budget for a category",
+        responses={201: BudgetSerializer, 400: VALIDATION_ERROR, 401: UNAUTHORIZED},
+    ),
+    retrieve=extend_schema(
+        summary="Get a budget", responses={200: BudgetSerializer, 404: NOT_FOUND}
+    ),
+    update=extend_schema(
+        summary="Replace a budget",
+        responses={200: BudgetSerializer, 400: VALIDATION_ERROR, 404: NOT_FOUND},
+    ),
+    partial_update=extend_schema(
+        summary="Update some fields of a budget",
+        responses={200: BudgetSerializer, 400: VALIDATION_ERROR, 404: NOT_FOUND},
+    ),
+    destroy=extend_schema(summary="Delete a budget", responses={204: None, 404: NOT_FOUND}),
+)
+@extend_schema(tags=["budgets"])
+class BudgetViewSet(OwnedQuerysetMixin, viewsets.ModelViewSet):
+    queryset = Budget.objects.all()
+    serializer_class = BudgetSerializer
+    filterset_class = BudgetFilter
+    ordering_fields = ["month", "limit", "spent"]
+
+    def get_queryset(self):
+        # Adds `spent` to every budget in the same SQL query.
+        return with_spent(super().get_queryset())

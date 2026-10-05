@@ -4,7 +4,7 @@ from decimal import Decimal
 import factory
 from django.contrib.auth import get_user_model
 
-from apps.ledger.models import Category, Expense
+from apps.ledger.models import Budget, Category, Expense
 
 DEFAULT_PASSWORD = "correct-horse-battery"
 
@@ -40,3 +40,14 @@ class ExpenseFactory(factory.django.DjangoModelFactory):
     currency = "USD"
     description = factory.Sequence(lambda n: f"Expense {n}")
     date = datetime.date(2026, 1, 15)
+
+
+class BudgetFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Budget
+
+    owner = factory.SubFactory(UserFactory)
+    category = factory.SubFactory(CategoryFactory, owner=factory.SelfAttribute("..owner"))
+    month = datetime.date(2026, 1, 1)
+    limit = Decimal("100.00")
+    currency = "USD"

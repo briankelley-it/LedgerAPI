@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from apps.ledger.models import Category, Expense
+from apps.ledger.models import Budget, Category, Expense
 
 
 @admin.register(Category)
@@ -16,3 +16,9 @@ class ExpenseAdmin(admin.ModelAdmin):
     list_filter = ["owner", "currency"]
     search_fields = ["description"]
     date_hierarchy = "date"
+
+
+@admin.register(Budget)
+class BudgetAdmin(admin.ModelAdmin):
+    list_display = ["category", "month", "limit", "currency", "owner"]
+    list_filter = ["owner", "month"]

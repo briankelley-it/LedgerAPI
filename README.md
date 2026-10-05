@@ -6,8 +6,9 @@
 ![Django](https://img.shields.io/badge/django-5.2-green)
 
 An expense tracker REST API. Users register, log in with a JWT, and manage
-their own spending categories and expenses. A summary endpoint reports total
-spending, totals by category and totals by month.
+their own spending categories, expenses and monthly budgets. A summary endpoint
+reports total spending, totals by category and totals by month, and every
+budget shows how much has been spent against it.
 
 The goal of this project is to show a small API built carefully: consistent
 errors, strict per-user data isolation, money handled as decimals, every
@@ -83,6 +84,8 @@ and the token endpoints needs an `Authorization: Bearer <access token>` header.
 | GET, PUT, PATCH, DELETE | `categories/{id}/` | One category |
 | GET, POST | `expenses/` | List or create expenses |
 | GET, PUT, PATCH, DELETE | `expenses/{id}/` | One expense |
+| GET, POST | `budgets/` | List or create monthly budgets |
+| GET, PUT, PATCH, DELETE | `budgets/{id}/` | One budget |
 | GET | `reports/summary/` | Totals, by category and by month |
 
 `GET expenses/` supports:
@@ -100,6 +103,20 @@ and the token endpoints needs an `Authorization: Bearer <access token>` header.
 
 `GET reports/summary/` accepts optional `start`, `end` (inclusive dates) and
 `currency` (default `USD`).
+
+A budget is a spending limit for one category in one month (one budget per
+category per month). Responses include what has been spent so far:
+
+```json
+{
+  "id": 1, "category": 2, "month": "2026-10", "limit": "60.00", "currency": "USD",
+  "spent": "75.40", "remaining": "-15.40", "over_budget": true,
+  "created_at": "2026-10-05T17:12:55Z", "updated_at": "2026-10-05T17:12:55Z"
+}
+```
+
+`GET budgets/` supports `month` (`2026-10`), `category`, `over_budget`
+(`true`/`false`) and `ordering` by `month`, `limit` or `spent`.
 
 ## Example with curl
 
@@ -235,8 +252,13 @@ number, and real conversion needs exchange rates. The summary endpoint adds up
 one currency at a time (default USD) and says which one in the response.
 
 **Thin views, logic elsewhere.** Validation lives in serializers, query
-parameters in a `FilterSet`, and the report math in `apps/reports/services.py`,
-which is plain Python that can be tested without HTTP.
+parameters in a `FilterSet`, and the math in small services modules
+(`apps/reports/services.py`, `apps/ledger/services.py`) that can be tested
+without HTTP.
+
+**No N+1 queries for budgets.** Each budget's `spent` is calculated in the
+same SQL query that loads the budgets, using a subquery. Listing 100 budgets
+takes 2 queries (count + page), not 101, and a test locks that in.
 
 **One error format.** A custom DRF exception handler, plus JSON handlers for
 Django's 404 and 500 pages, means clients only ever parse one error shape.
@@ -256,7 +278,6 @@ constraints and date functions can behave differently, so CI and
 
 ## Possible next steps
 
-- Monthly budgets per category with "over budget" reporting
 - Rate limiting on the login and register endpoints
 - Refresh token rotation and blacklisting on logout
 - Production security settings (HTTPS redirect, HSTS, secure cookies) behind a reverse proxy

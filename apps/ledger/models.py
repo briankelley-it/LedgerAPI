@@ -72,3 +72,34 @@ class Expense(TimestampedModel):
 
     def __str__(self):
         return f"{self.date} {self.amount} {self.currency} {self.description}".strip()
+
+
+class Budget(TimestampedModel):
+    """A monthly spending limit for one category."""
+
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="budgets"
+    )
+    # A budget only makes sense for its category, so it goes when the category goes.
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name="budgets")
+    # Always the first day of the month. The API shows it as "YYYY-MM".
+    month = models.DateField()
+    limit = models.DecimalField(
+        max_digits=12, decimal_places=2, validators=[MinValueValidator(Decimal("0.01"))]
+    )
+    currency = models.CharField(max_length=3, default="USD")
+
+    class Meta:
+        ordering = ["-month", "category__name", "id"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["owner", "category", "month"], name="unique_budget_per_category_month"
+            ),
+            models.CheckConstraint(condition=models.Q(limit__gt=0), name="budget_limit_positive"),
+            models.CheckConstraint(
+                condition=models.Q(month__day=1), name="budget_month_is_first_day"
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.category} {self.month:%Y-%m}: {self.limit} {self.currency}"
